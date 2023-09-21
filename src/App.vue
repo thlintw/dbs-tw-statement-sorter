@@ -1,33 +1,99 @@
 
 
 <template>
-  <div>
-    <input type="file" ref="fileInput" @change="handleFileUpload" />
-    <button @click="extractText">Extract Text</button>
-    <div v-if="Object.keys(cardGroups).length">
-      <div v-for="cg in cardGroups">
-        <div>{{ cg.groupName }}</div>
-        <table>
-          <thead>
-            <th>消費日</th>
-            <th>入帳日</th>
-            <th>消費明細</th>
-            <th>外幣幣別</th>
-            <th>外幣金額</th>
-            <th>消費金額</th>
-          </thead>
-          <tbody>
-            <tr v-for="t in cg.transactions">
-              <td>{{ t.transactionDate }}</td>
-              <td>{{ t.settlementDate }}</td>
-              <td>{{ t.description }}</td>
-              <td>{{ t.foreignCurrency }}</td>
-              <td>{{ t.foreignAmount }}</td>
-              <td>{{ t.amount }}</td>
-            </tr>
-          </tbody>
-        </table>
+  <div class="flex w-full flex-col items-center min-h-[calc(100dvh)]" :class="[dark?'dark':'']">
+    <div class="flex w-full flex-col items-center min-h-[calc(100dvh)] bg-white dark:bg-slate-900 transition-all duration-200 overflow-x-auto relative">
+      <div class="flex items-center mt-4 w-10/12 lg:w-auto">
+        <input class="block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file"
+         @change="handleFileUpload" />
+        <div class="shrink-0">
+          <button type="button" 
+            class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 ml-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
+            @click="extractText">
+            讀取
+          </button>
+        </div>
+        <button @click="toggleDarkMode" class="border border-gray-200 dark:border-gray-700 dark:text-slate-100 text-gray-600 dark:bg-slate-800 rounded-full absolute right-2 top-2 p-1">
+          <Transition name="fade" mode="out-in">
+            <svg v-if="dark"
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            <svg  v-else
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-6 w-6"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+              />
+            </svg>
+          </Transition>
+        </button>
       </div>
+      <div class="w-full flex flex-col lg:flex-row mt-6 items-start lg:items-start px-4 pb-6">
+        <Transition name="scalefade">
+          <div class="w-full lg:w-auto p-4 bg-white border border-gray-200 rounded-lg shadow lg:p-5 dark:bg-gray-800 dark:border-gray-700" v-if="Object.keys(cardGroups).length">
+            <div class="flex items-center justify-between mb-4">
+                <h5 class="text-xl font-bold leading-none text-gray-900 dark:text-white">Summary</h5>
+            </div>
+            <div class="flow-root">
+              <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
+                <li class="py-2 sm:py-3" v-for="cg in cardGroups">
+                  <div class="flex items-center space-x-6">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 truncate dark:text-white">
+                          {{ cg.groupName}}
+                      </p>
+                    </div>
+                    <div class="ml-2 inline-flex items-center text-base font-semibold text-gray-900 dark:text-white">
+                      ${{ cg.totalAmount.toLocaleString() }}
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </Transition>
+        <Transition name="scalefade">
+          <div class="mt-6 lg:mt-auto lg:ml-4 flex flex-col space-y-4 max-w-full" v-if="Object.keys(cardGroups).length">
+            <div class="relative shadow-md rounded-lg border border-gray-200 dark:border-gray-700 overflow-x-auto" v-for="cg in cardGroups">
+              <table class="w-full border-collapse border-spacing-1 min-w-min text-sm text-left text-gray-500 dark:text-gray-400">
+                <caption class="p-4 lg:p-6 text-lg font-semibold text-left text-gray-900 bg-white dark:text-white dark:bg-gray-800">
+                  {{ cg.groupName }}
+                  <p class="mt-1 text-sm font-normal text-gray-500 dark:text-gray-400">${{ cg.totalAmount.toLocaleString() }}</p>
+                </caption>
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                  <th scope="col" class="px-4 py-3 whitespace-nowrap" v-for="h in [
+                    '消費明細', '消費日', '入帳日', '外幣幣別', '外幣金額', '消費金額'
+                  ]"
+                  >{{ h }}</th>
+                </thead>
+                <tbody>
+                  <tr v-for="t in cg.transactions" class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 text-xs lg:text-sm last:border-b-0">
+                    <th scope="row" class="px-4 lg:px-6 py-3 lg:py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white max-w-full overflow-hidden text-ellipsis">{{ t.description }}</th>
+                    <td class="px-4 lg:px-6 py-3 lg:py-4">{{ t.transactionDate }}</td>
+                    <td class="px-4 lg:px-6 py-3 lg:py-4">{{ t.settlementDate }}</td>
+                    <td class="px-4 lg:px-6 py-3 lg:py-4">{{ t.foreignCurrency }}</td>
+                    <td class="px-4 lg:px-6 py-3 lg:py-4 text-center">{{ t.foreignAmount ? `$${t.foreignAmount.toLocaleString()}` : '' }}</td>
+                    <td class="px-4 lg:px-6 py-3 lg:py-4 text-center">${{ t.amount.toLocaleString() }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Transition>
+      </div>
+
     </div>
   </div>
 </template>
@@ -37,7 +103,7 @@ import { ref } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Initialize PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/assets/js/pdf.worker.min.js';
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('/assets/js/pdf.worker.min.js', import.meta.url).toString();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const extractedText = ref<string | null>(null);
@@ -190,6 +256,10 @@ const parseTransactions = () => {
 };
 
 const extractText = async () => {
+  rawLines.value = [];
+  transactions.value = [];
+  cardGroups.value = {};
+
   if (!fileInput.value?.files?.[0]) {
     console.log('No file selected.');
     return;
@@ -231,19 +301,10 @@ const extractText = async () => {
   reader.readAsArrayBuffer(file);
 };
 
-</script>
+const dark = ref<boolean>(true);
 
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>
+const toggleDarkMode = () => {
+  dark.value = !dark.value;
+};
+
+</script>

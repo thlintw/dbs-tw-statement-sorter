@@ -2,18 +2,72 @@
 
 <template>
   <div class="flex w-full flex-col items-center min-h-[calc(100dvh)]" :class="[dark?'dark':'']">
-    <div class="flex w-full flex-col items-center min-h-[calc(100dvh)] bg-white dark:bg-slate-900 transition-all duration-200 overflow-x-auto relative">
-      <div class="flex items-center mt-4 w-10/12 lg:w-auto">
-        <input class="block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file"
+    <Transition name="scalefade">
+      <div tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full flex justify-center items-center"
+      v-if="showPwModal">
+        <div class="relative w-full max-w-md max-h-full">
+          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <button type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            @click="showPwModal = false">
+              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+              </svg>
+              <span class="sr-only">Close modal</span>
+            </button>
+            <div class="px-6 py-6 lg:px-8">
+              <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">PDF為密碼保護</h3>
+              <form class="space-y-6" action="#">
+                <div>
+                  <label for="password" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
+                  <input type="password" name="password" id="password" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-600 dark:border-gray-500 dark:placeholder-gray-400 dark:text-white" 
+                  placeholder="pdf password" ref="pw" v-model="pdfPw">
+                </div>
+                <button type="button" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                @click="tryExtractWithPw">Submit</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div> 
+    </Transition>
+    <Transition name="scalefade">
+      <div tabindex="-1" aria-hidden="true" class="fixed top-0 left-0 right-0 z-50 w-full p-4 overflow-x-hidden overflow-y-auto md:inset-0 h-[calc(100%-1rem)] max-h-full flex justify-center items-center"
+        v-if="showNothingWarning">
+        <div class="relative w-full max-w-md max-h-full">
+          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+            <button type="button" class="absolute top-3 right-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ml-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
+            @click="dismissParseWarning">
+              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+              </svg>
+              <span class="sr-only">Close modal</span>
+            </button>
+            <div class="px-6 py-6 lg:px-8">
+              <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">無法處理檔案</h3>
+              <form class="space-y-6" action="#">
+                <div class="text-white">
+                  請確認是否為星展銀行的信用卡帳單
+                </div>
+                <button type="button" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                @click="dismissParseWarning">OK</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div> 
+    </Transition>
+    <div class="flex w-full flex-col items-center min-h-[calc(100dvh)] bg-white dark:bg-gray-900 transition-all duration-200 overflow-x-auto relative">
+      <div class="flex items-center mt-4 w-9/12 lg:w-auto self-start lg:self-center ml-2 lg:ml-0">
+        <input class="shrink block text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" id="file_input" type="file"
          @change="handleFileUpload" />
         <div class="shrink-0">
           <button type="button" 
             class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 ml-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-            @click="extractText">
+            @click="toExtractText">
             讀取
           </button>
         </div>
-        <button @click="toggleDarkMode" class="border border-gray-200 dark:border-gray-700 dark:text-slate-100 text-gray-600 dark:bg-slate-800 rounded-full absolute right-2 top-2 p-1">
+        <button @click="toggleDarkMode" class="border border-gray-200 dark:border-gray-700 dark:text-slate-100 text-gray-600 bg-white dark:bg-slate-800 rounded-full absolute right-2 top-2 p-1">
           <Transition name="fade" mode="out-in">
             <svg v-if="dark"
               xmlns="http://www.w3.org/2000/svg"
@@ -99,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Initialize PDF.js
@@ -132,6 +186,8 @@ interface CardGroup {
 
 const cardGroups = ref<Record<string, CardGroup>>({});
 const transactions = ref<Transaction[]>([]);
+
+const parsed = ref<boolean>(false);
 
 const parseTransactions = () => {
   let isReading = false;
@@ -253,9 +309,15 @@ const parseTransactions = () => {
       }
     }
   }
+  parsed.value = true;
 };
 
-const extractText = async () => {
+const needPw = ref<boolean>(false);
+
+const showNothingWarning = ref<boolean>(false);
+
+const extractText = async (password?: string): Promise<boolean> => {
+  parsed.value = false;
   rawLines.value = [];
   transactions.value = [];
   cardGroups.value = {};
@@ -276,35 +338,69 @@ const extractText = async () => {
     
     const pdfData = event.target.result as ArrayBuffer;
     try {
-      const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+      const loadingTask = pdfjsLib.getDocument({ 
+        data: pdfData,
+        password: password,
+      });
       const pdf = await loadingTask.promise;
-      
-      // let fullText = '';
   
       const numPages = pdf.numPages;
       for (let i = 1; i <= numPages; i++) {
         const page = await pdf.getPage(i);
         const textContent = await page.getTextContent();
-        // fullText += textContent.items.map(item => item['str']).join('<br>');
         rawLines.value.push(...textContent.items.map(item => item['str']));
       }
 
-      // extractedText.value = fullText;
       parseTransactions();
       console.log(transactions.value);
       console.log(cardGroups.value);
+      needPw.value = false;
     } catch (error) {
-      console.error('Error extracting text from PDF:', error);
+      console.error(error);
+      needPw.value = true;
     }
   };
 
   reader.readAsArrayBuffer(file);
+
+  const w = watch(() => parsed.value, (parsed) => {
+    if (parsed) {
+      if (transactions.value.length === 0) {
+        showNothingWarning.value = true;
+      }
+      w();
+    }
+  });
 };
+
+
+const dismissParseWarning = () => {
+  showNothingWarning.value = false;
+  parsed.value = false;
+};
+
+const pw = ref(null);
+const pdfPw = ref<string | null>(null);
+const showPwModal = ref<boolean>(false);
 
 const dark = ref<boolean>(true);
 
 const toggleDarkMode = () => {
   dark.value = !dark.value;
+};
+
+const toExtractText = async () => {
+  await extractText();
+  if (needPw.value) {
+    showPwModal.value = true;
+  } 
+};
+
+const tryExtractWithPw = () => {
+  if (pdfPw.value) {
+    extractText(pdfPw.value);
+    showPwModal.value = false;
+  }
 };
 
 </script>
